@@ -1,0 +1,14 @@
+
+[app]
+# http运行端口
+Port = "8012"
+# debug/release/test
+RunMode = "debug"
+# 你申请的机器人的token
+Token=""
+Debug = false
+Pprof = true
+[redis]
+Addr = ""
+Password = ""
+Dcc = 0
