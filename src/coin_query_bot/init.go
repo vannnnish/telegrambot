@@ -10,10 +10,10 @@ import (
 )
 
 func Init() {
-	// 开始初始化
-	task.UpdateFinaceRate()
 	task.UpdateAllCoins()
+	// 开始初始化
+	// task.UpdateFinaceRate()
 	//	task.UpdatePrimaryExchangePair()
-	task.UpdateCoin()
+	// task.UpdateCoin()
 
 }

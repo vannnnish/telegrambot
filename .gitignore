@@ -21,22 +21,8 @@ pkg
 bin
 .DS_Store
 
-#/src/niuyan/vendor/*
-#!/src/niuyan/vendor/vendor.json
-#!/src/niuyan/vendor/gitlab.yeeyuntech.com/
-/src/niuyan/niuyan_darwin_amd64
-/src/niuyan/niuyan_linux_amd64
-src/niuyan/conf/address
-
-Index/locale
-Index/conf
-front
-Index/niuyan_front
-/src/niuyan/niuyan
-/src/niuyan/niuyan_darwin_amd64.zip
-/src/niuyan/vannnnish@47.52.210.51
-/src/niuyan/view/static/js/conf.js
 /src/coin_query_bot/coin_query_bot_linux_amd64
 /src/coin_query_bot/coin_query_bot
 /src/coin_query_bot/redis/
 /src/coin_query_bot/conf/conf.toml
+/src/coin_query_bot/vendor

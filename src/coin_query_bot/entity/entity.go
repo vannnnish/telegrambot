@@ -15,6 +15,7 @@ type ExchangePairInfo struct {
 	Price        float64
 	Change24h    float64
 	CashIn       float64
+	GlobalCashIn float64
 }
 
 // 币种在相应的交易所的涨跌幅与价格
@@ -57,7 +58,9 @@ type SingleCoin struct {
 	Data struct {
 		Coin struct {
 			Price_usd          string
+			Percent_change_1h  string
 			Percent_change_24h string
+			Rank               string
 		}
 	}
 }

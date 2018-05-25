@@ -1,5 +1,0 @@
-copy from
-https://github.com/astaxie/beego/blob/master/template.go
-https://github.com/astaxie/beego/blob/master/templatefunc.go
-do some change
-

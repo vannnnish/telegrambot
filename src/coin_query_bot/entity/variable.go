@@ -11,6 +11,43 @@ const MessageHead = `%s(%s):
 ------------------
 `
 
+var NewFormatFront = `💲%s(%s)实时行情💲
+───────────
+💡排名：%s
+💡价格：  ￥%.4f
+💡1小时涨幅： %.2f%%
+💡24小时涨幅: %.2f%%
+`
+var NewFormatMiddle = `💡今日净流入：￥%.2f万`
+var NewFormatTail = `
+───────────
+获取资金走势图: http://dl.niuyan.com/?utm_source=tg
+
+牛眼行情【%s】
+`
+
+var NewFormatFrontEnglish = `💲%s(%s)💲
+───────────
+💡Rank：%s
+💡Price：$%.4f
+💡1H：%.2f%%
+💡24H：%.2f%%
+`
+
+var NewFormatMiddleEnglish = `💡Net Inflow：$ %.2f`
+
+var NewFormatTailEnglish = `
+───────────
+From Bullseye.io
+App download: http://dl.niuyan.com/?utm_source=en
+Bullseye 【%s】
+`
+
+var MessageHeadGlobal = `%s(%s):
+全网净流入: ￥%.2f
+------------------
+`
+
 var FormatMessage = `%s（%s/%s）
 最新价格：$%.4f
 今日涨幅：%.2f%%
@@ -34,8 +71,13 @@ var GlobalMessageCNY = `
 币种:    %s
 全网价格：￥%.4f
 今日涨幅：%.2f%%
+`
+var GlobalPureCNY = `全网净流入: ￥%.2f`
+
+var GlobalMessgeCNYTail = `
 ------------------
 `
+
 var FormatTail = `更新时间:%s
 数据来源:牛眼行情
 `
@@ -53,6 +95,8 @@ var (
 	AllExchangePairApi = "http://market.niuyan.com/api/v3/app/exchange/tickers?exchange_id=%s"
 	// 获取币种详情
 	SingleCoinInfoApi = "http://market.niuyan.com/api/v3/app/coin?coin_id=%s"
+	// 获取币种全网净流入
+	GlobalCoinFinance = "https://market.niuyan.com/api/v3/app/finance/coin/today?coin_id=%s"
 	// 汇率接口
 	FinanceRateApi = "https://market.niuyan.com/api/v3/common/financerate"
 )

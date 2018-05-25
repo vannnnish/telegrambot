@@ -27,7 +27,7 @@ const (
 
 func InitTask() {
 	toolbox.AddTask("update finance rate", toolbox.NewTask("update finance rate", TwoMinuteConfig, UpdateFinaceRate))
-	toolbox.AddTask("update pair info", toolbox.NewTask("update pair info", ThreeMinuteConfig, UpdateCoin))
+	// toolbox.AddTask("update pair info", toolbox.NewTask("update pair info", ThreeMinuteConfig, UpdateCoin))
 }
 
 // 汇率更新接口
@@ -211,6 +211,18 @@ func pushExchangePairIn(key interface{}, returnDatas []entity.ExchangePairInfo) 
 					yeego.Print("json解析失败:", err)
 					return
 				}
+				data, err := yeeHttp.Get(fmt.Sprintf(entity.GlobalCoinFinance, entity.CoinMap[sortedExchange[0].Symbol])).Exec().ToBytes()
+				if err != nil {
+					yeego.Print("全网数据获取失败:", err)
+					return
+				}
+				var globalCashInfo entity.CashIn
+				err = json.Unmarshal(data, &globalCashInfo)
+				if err != nil {
+					yeego.Print("全网数据json解析失败:", err)
+					return
+				}
+				returnData.GlobalCashIn = globalCashInfo.Data.Data.Buy_vol_usd - globalCashInfo.Data.Data.Sell_vol_usd
 				returnData.CashIn = cash.Data.Data.Buy_vol_usd - cash.Data.Data.Sell_vol_usd
 				returnData.Price = sortedExchange[0].PriceUsd
 				returnData.Change24h = sortedExchange[0].ChangeToday
@@ -253,7 +265,9 @@ func UpdateAllCoins() error {
 		if 11 > len(allCoin.Data.Fields) || len(coin) != len(allCoin.Data.Fields) {
 			return updateFailErr
 		}
-		entity.CoinMap[coin[1]] = coin[0]
+		if entity.CoinMap[coin[1]] == "" {
+			entity.CoinMap[coin[1]] = coin[0]
+		}
 	}
 	return nil
 }

@@ -9,22 +9,19 @@ import (
 	"log"
 	"gopkg.in/telegram-bot-api.v4"
 	"github.com/yeeyuntech/yeego/yeeStrconv"
-	"sync"
 	"fmt"
 	"strings"
 	"coin_query_bot/entity"
-	"coin_query_bot/task"
-	"github.com/astaxie/beego/toolbox"
 	"gitlab.yeeyuntech.com/yee/easyweb"
 	"github.com/yeeyuntech/yeego"
 	"time"
-	"github.com/yeeyuntech/yeego/yeeHttp"
-	"encoding/json"
+	"github.com/astaxie/beego/toolbox"
+	"coin_query_bot/task"
+	"coin_query_bot/module/notice"
 )
 
 func main() {
 	globalConfig()
-	//fmt.Println("exchangeSet:", result)
 	token := yeego.Config.GetString("app.Token")
 	Init()
 	task.InitTask()
@@ -33,7 +30,6 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-
 	bot.Debug = true
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
@@ -46,7 +42,7 @@ func main() {
 		// 这里里面是向订阅号发送消息
 		if update.ChannelPost != nil {
 			// 获取要返回的数据结构
-			message, ok := getFormatData(strings.ToUpper(update.ChannelPost.Text))
+			message, ok := notice.GetFormatData(strings.ToUpper(update.ChannelPost.Text))
 			if !ok {
 				continue
 			}
@@ -54,6 +50,7 @@ func main() {
 			if !ok {
 				continue
 			}
+
 			updateTime := updateTimeI.(int64)
 			timeStr := time.Unix(updateTime, 0).Format("01-02 15:04")
 			message = message + fmt.Sprintf(entity.FormatTail, timeStr)
@@ -62,134 +59,80 @@ func main() {
 			bot.Send(msg)
 			continue
 		}
+		if update.Message == nil {
+			continue
+		}
+		// 获取管理员列表
+		memebers, err := bot.GetChatAdministrators(tgbotapi.ChatConfig{ChatID: update.Message.Chat.ID})
+		if err != nil {
+			fmt.Println("获取管理员失败:", err)
+			continue
+		}
 
-		// 获取要返回的数据结构
-		message, ok := getFormatData(strings.ToUpper(update.Message.Text))
-		if !ok {
-			message, ok := getGlobalData(strings.ToUpper(update.Message.Text))
+		var isDelete = true
+		for _, memeber := range memebers {
+			if update.Message.From.ID == memeber.User.ID {
+				isDelete = false
+			}
+		}
+		// 删除加群信息
+		if update.Message.NewChatMembers != nil {
+			message := update.Message
+			fmt.Println("开始删除这条信息")
+			_, err := bot.DeleteMessage(tgbotapi.DeleteMessageConfig{message.Chat.ChatConfig().ChatID, message.MessageID})
+			if err != nil {
+				fmt.Println("这个错误:", err)
+			}
+		}
+		// 删除图片
+		if update.Message.Photo != nil {
+			message := update.Message
+			if isDelete {
+				_, err := bot.DeleteMessage(tgbotapi.DeleteMessageConfig{message.Chat.ChatConfig().ChatID, message.MessageID})
+				if err != nil {
+					fmt.Println("这个错误:", err)
+				}
+				continue
+			}
+		}
+		if strings.Contains(update.Message.Text, "http://") || strings.Contains(update.Message.Text, "https://") || strings.Contains(update.Message.Text, ".com") ||
+			strings.Contains(update.Message.Text, ".net") ||
+			strings.Contains(update.Message.Text, ".io") ||
+			strings.Contains(update.Message.Text, ".net") ||
+			strings.Contains(update.Message.Text, ".org") ||
+			strings.Contains(update.Message.Text, ".gov") ||
+			strings.Contains(update.Message.Text, ".info") ||
+			strings.Contains(update.Message.Text, ".pro") {
+			message := update.Message
+
+			if isDelete {
+				_, err := bot.DeleteMessage(tgbotapi.DeleteMessageConfig{message.Chat.ChatConfig().ChatID, message.MessageID})
+				if err != nil {
+					fmt.Println("这个错误:", err)
+				}
+			}
+		}
+		if update.Message.Chat.UserName == "bullseye_official" {
+
+			message, ok := notice.GetGlobalDataEnglish(strings.ToUpper(update.Message.Text))
 			if !ok {
 				continue
 			}
-			message = message + fmt.Sprintf(entity.FormatTail, time.Now().Format("01-02 15:04"))
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
 			msg.ReplyToMessageID = update.Message.MessageID
 			bot.Send(msg)
 			continue
+
 		}
-		// updateTimeI, _ := entity.MarketIno.Load("updateTime")
-		// message = message + fmt.Sprintf(entity.FormatTail, time.Now().Format("01-02 15:04"))
-		// fmt.Println("这个时间:", updateTimeI)
+		message, ok := notice.GetGlobalData(strings.ToUpper(update.Message.Text))
+		if !ok {
+			continue
+		}
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
 		msg.ReplyToMessageID = update.Message.MessageID
 		bot.Send(msg)
-	}
-}
 
-// 获取全网数据
-func getGlobalData(symbol string) (string, bool) {
-	// 获取人民币的汇率
-	cnyFinanceInterface, ok := entity.FinalRateSyncMap.Load("CNY")
-	var cnyFinance float64
-	if !ok {
-		cnyFinance = 6.5
-	} else {
-		cnyFinance = cnyFinanceInterface.(float64)
 	}
-	var returnData = fmt.Sprintf(entity.MessageHead, entity.CoinMap[symbol], symbol)
-	url := fmt.Sprintf(entity.SingleCoinInfoApi, entity.CoinMap[symbol])
-	data, err := yeeHttp.Get(url).Exec().ToBytes()
-	if err != nil {
-		yeego.Print("全网数据获取失败:", err)
-		return returnData, false
-	}
-	var coinInfo entity.SingleCoin
-	err = json.Unmarshal(data, &coinInfo)
-	if err != nil {
-		yeego.Print("json解析失败:", err)
-		return returnData, false
-	}
-	priceUsd := yeeStrconv.ParseFloat64Default0(coinInfo.Data.Coin.Price_usd) * cnyFinance
-	percentChange := yeeStrconv.ParseFloat64Default0(coinInfo.Data.Coin.Percent_change_24h) * 100
-	if priceUsd == 0 {
-		return returnData, false
-	}
-	returnData = returnData + fmt.Sprintf(entity.GlobalMessageCNY, symbol, priceUsd, percentChange)
-	return returnData, true
-}
-
-// 最初的处理
-func getFormatData(symbol string) (string, bool) {
-	// 获取人民币的汇率
-	cnyFinanceInterface, ok := entity.FinalRateSyncMap.Load("CNY")
-	var cnyFinance float64
-	if !ok {
-		cnyFinance = 6.5
-	} else {
-		cnyFinance = cnyFinanceInterface.(float64)
-	}
-	var returnData = fmt.Sprintf(entity.MessageHead, entity.CoinMap[symbol], symbol)
-	result, ok := entity.MarketIno.Load(symbol)
-	// symbolName,ok:=key.(string)
-	// if !ok{
-	//	return true
-	// 	}
-	if !ok {
-		return returnData, false
-	}
-	exInfos, ok := result.([]entity.ExchangePairInfo)
-	if !ok {
-		return returnData, false
-	}
-	for _, exInfo := range exInfos {
-		returnData = returnData + fmt.Sprintf(entity.FormatMessageCNY, exInfo.ExchangeName, symbol, exInfo.QuoteSymbol, exInfo.Price*cnyFinance, exInfo.Change24h*100, exInfo.CashIn*cnyFinance)
-	}
-
-	return returnData, true
-}
-
-/*func getFormatData(symbol string) string {
-	var returnData = entity.MESSAGE_HEADER
-	for k, v := range entity.ParimaryExhcnageNameMap {
-		var price entity.CoinPriceInfo
-		var cash entity.CashIn
-		pairData, err := yeeHttp.Get(fmt.Sprintf(entity.PairApi, entity.CoinIdMap[symbol], k)).Exec().ToBytes()
-		if err != nil {
-			log.Println("请求错误:", err)
-			continue
-		}
-		err = json.Unmarshal(pairData, &price)
-		if err != nil {
-			log.Println("请求错误:", err)
-			continue
-		}
-		cashInInfo, err := yeeHttp.Get(fmt.Sprintf(entity.CashInApi, k, symbol)).Exec().ToBytes()
-		if err != nil {
-			log.Println("请求错误:", err)
-			continue
-		}
-		err = json.Unmarshal(cashInInfo, &cash)
-
-		if err != nil {
-			log.Println("请求错误:", err)
-			continue
-		}
-		if price.Data.Price_usd == 0 || cash.Data.Data.Sell_vol_usd == 0 {
-			continue
-		}
-		percentChange24 := price.Data.Percent_change_today * 100
-		pureCashIn := cash.Data.Data.Buy_vol_usd - cash.Data.Data.Sell_vol_usd
-		fmt.Println("价格:", price.Data.Price_usd, "24小时变化:", percentChange24, "进流入:", pureCashIn)
-		returnData = returnData + fmt.Sprintf(entity.FormatMessage, v, symbol, price.Data.Price_usd, price.Data.Percent_change_today*100, cash.Data.Data.Buy_vol_usd)
-		fmt.Println("返回的结果:", returnData)
-	}
-
-	return returnData
-}*/
-
-// 获取主流币种的信息
-func UpdateCoinInfo(m *sync.Map) {
-	// 获取币种信息
-
 }
 
 // 一些全局配置
