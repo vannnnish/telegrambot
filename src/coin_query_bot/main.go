@@ -102,7 +102,27 @@ func main() {
 			strings.Contains(update.Message.Text, ".org") ||
 			strings.Contains(update.Message.Text, ".gov") ||
 			strings.Contains(update.Message.Text, ".info") ||
-			strings.Contains(update.Message.Text, ".pro") {
+			strings.Contains(update.Message.Text, ".pro") ||
+			strings.Contains(update.Message.Text, "好消息，") ||
+			strings.Contains(update.Message.Text, "代币制作") ||
+			strings.Contains(update.Message.Text, "邀请码") ||
+			strings.Contains(update.Message.Text, "私聊我") ||
+			strings.Contains(update.Message.Text, "电报群") ||
+			strings.Contains(update.Message.Text, "加我") ||
+			strings.Contains(update.Message.Text, "电报拉人") ||
+			strings.Contains(update.Message.Text, "举报") ||
+			strings.Contains(update.Message.Text, "spam") ||
+			strings.Contains(update.Message.Text, "又是什么群") ||
+			strings.Contains(update.Message.Text, "怎么进来的") ||
+			strings.Contains(update.Message.Text, "垃圾群") ||
+			strings.Contains(update.Message.Text, "需要帮助科学上网") ||
+			strings.Contains(update.Message.Text, "微信") ||
+			strings.Contains(update.Message.Text, "糖果空投") ||
+			strings.Contains(update.Message.Text, "Imtoken钱包") ||
+			strings.Contains(update.Message.Text, "联系我") ||
+			strings.Contains(update.Message.Text, "im钱包") ||
+			strings.Contains(update.Message.Text, "数量有限先到先得") ||
+			strings.Contains(update.Message.Text, "电报群拉人") {
 			message := update.Message
 
 			if isDelete {

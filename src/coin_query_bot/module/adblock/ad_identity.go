@@ -5,3 +5,9 @@
 
 package adblock
 
+func IsDelete(msg string) bool {
+	var isDelete bool
+
+
+	return isDelete
+}
